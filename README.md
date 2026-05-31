@@ -1,16 +1,41 @@
-# React + Vite
+# PokéApp - Primera Generación
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una aplicación interactiva construida con React, Tailwind CSS y PokéAPI que muestra los 151 Pokémon originales de la región de Kanto.
 
-Currently, two official plugins are available:
+## Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Lista de Pokémon:** Visualización en cuadrícula responsiva (hasta 4 columnas).
+- **Tarjetas Interactivas:** Cada Pokémon se muestra en una tarjeta con su arte oficial, nombre, número de ID y tipos.
+- **Detalles Expandidos:** Al hacer clic en un Pokémon, se muestra una vista detallada con:
+  - Descripción oficial de la Pokédex.
+  - Estadísticas base (HP, Ataque, Defensa, etc.) con barras de progreso animadas.
+  - Peso, altura y habilidades.
+- **Diseño Moderno:** Interfaz limpia con animaciones de entrada, efectos de hover y feedback táctil.
+- **Sistema de Votación (Demo):** Interfaz preparada para un sistema de votación de Pokémon favoritos.
 
-## React Compiler
+## Tecnologías Utilizadas
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **React 19**
+- **Vite**
+- **Tailwind CSS**
+- **Axios** (para peticiones a la API)
+- **FontAwesome** (iconografía)
 
-## Expanding the ESLint configuration
+## Cómo Ejecutar
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. Instala las dependencias:
+   ```bash
+   npm install
+   ```
+2. Inicia el servidor de desarrollo:
+   ```bash
+   npm run dev
+   ```
+
+## Estrategia de Votación (LocalStorage)
+
+Para implementar el sistema de votación solicitado:
+1. **Almacenamiento:** Usaríamos `localStorage` para guardar el ID del Pokémon votado por el usuario (ej: `votedPokemonId: 25`).
+2. **Restricción:** Antes de registrar un voto, verificaríamos si ya existe un valor en `localStorage`. Si existe, se le notifica al usuario que ya ha votado.
+3. **Persistencia Global:** Dado que `localStorage` es local al navegador, para un conteo real de votos por todos los usuarios, se requeriría una base de datos (Firebase, Supabase, etc.).
+4. **Verificación de Identidad:** Para asegurar "1 voto por persona" real, lo ideal sería integrar autenticación (OAuth con Google/GitHub) y guardar el voto asociado al correo electrónico del usuario en el servidor.
