@@ -148,8 +148,8 @@ function App() {
 
   return (
     <div className="App min-h-screen bg-[#1a1a2e] font-sans text-gray-100 flex flex-col">
-      <header className="bg-[#16213e] pt-8 pb-4 shadow-2xl border-b border-blue-900/50 sticky top-0 z-50">
-        <div className="w-full px-4 md:px-8 text-center flex flex-col items-center justify-center gap-6">
+      <header className="bg-[#16213e] pt-4 pb-4 shadow-2xl border-b border-blue-900/50 sticky top-0 z-50">
+        <div className="w-full px-4 md:px-8 text-center flex flex-col items-center justify-center gap-4">
           <div className="w-full flex flex-col md:flex-row items-center justify-between gap-4 max-w-[1200px]">
             <div className="md:w-1/4 flex justify-start">
               {currentUser && (
