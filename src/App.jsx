@@ -7,6 +7,7 @@ import { supabase } from './supabase';
 
 const generations = [
   { name: 'Todos', offset: 0, limit: 1025 },
+  { name: 'Ranking', special: 'votes' },
   { name: 'Gen I', offset: 0, limit: 151 },
   { name: 'Gen II', offset: 151, limit: 100 },
   { name: 'Gen III', offset: 251, limit: 135 },
@@ -108,6 +109,11 @@ function App() {
     let filtered;
     if (gen.name === 'Todos') {
       filtered = allPokemons;
+    } else if (gen.name === 'Ranking') {
+      // Filter those with votes and sort by vote count
+      filtered = allPokemons
+        .filter(p => voteCounts[p.id] > 0)
+        .sort((a, b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
     } else {
       filtered = allPokemons.filter(p => p.id > gen.offset && p.id <= (gen.offset + gen.limit));
     }
