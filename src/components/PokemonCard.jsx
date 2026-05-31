@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { supabase } from '../supabase';
 
 const typeColors = {
   normal: '#A8A77A',
@@ -23,48 +24,48 @@ const typeColors = {
   fairy: '#D685AD',
 };
 
-function PokemonCard({ pokemon, onSelect, currentUser }) {
-  const [voteCount, setVoteCount] = useState(0);
-  const [hasVotedForThis, setHasVotedForThis] = useState(false);
-
-  useEffect(() => {
-    if (!pokemon) return;
-
-    const allVotes = JSON.parse(localStorage.getItem('pokedex_votes') || '[]');
-    const count = allVotes.filter(v => v.pokemonId === pokemon.id).length;
-    setVoteCount(count);
-
-    if (currentUser) {
-      const userVote = allVotes.find(v => v.email === currentUser.email && v.pokemonId === pokemon.id);
-      setHasVotedForThis(!!userVote);
-    }
-  }, [pokemon, currentUser]);
+function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initialHasVoted, onVoteUpdate }) {
+  const [isVoting, setIsVoting] = useState(false);
 
   if (!pokemon) return null;
 
-  const handleVote = (e) => {
+  const handleVote = async (e) => {
     e.stopPropagation();
-    if (!currentUser) return;
+    if (!currentUser || isVoting || initialHasVoted) return;
 
-    const allVotes = JSON.parse(localStorage.getItem('pokedex_votes') || '[]');
-    const existingVote = allVotes.find(v => v.email === currentUser.email);
+    setIsVoting(true);
 
-    if (existingVote) {
-      if (existingVote.pokemonId === pokemon.id) {
-        alert('Ya has votado por este Pokémon.');
-      } else {
-        alert('Solo puedes votar por un Pokémon en total. Ya has votado por otro.');
+    try {
+      // Check if user already voted globally
+      const { data: globalCheck, error: checkError } = await supabase
+        .from('votes')
+        .select('*')
+        .eq('email', currentUser.email)
+        .maybeSingle();
+
+      if (checkError) throw checkError;
+
+      if (globalCheck) {
+        alert('Solo puedes votar por un Pokémon en total.');
+        setIsVoting(false);
+        return;
       }
-      return;
-    }
 
-    const newVote = { email: currentUser.email, pokemonId: pokemon.id };
-    allVotes.push(newVote);
-    localStorage.setItem('pokedex_votes', JSON.stringify(allVotes));
-    
-    setVoteCount(prev => prev + 1);
-    setHasVotedForThis(true);
-    alert(`¡Has votado por ${pokemon.name.toUpperCase()}!`);
+      // Insert real vote
+      const { error: insertError } = await supabase
+        .from('votes')
+        .insert([{ email: currentUser.email, pokemon_id: pokemon.id }]);
+
+      if (insertError) throw insertError;
+
+      alert(`¡Has votado por ${pokemon.name.toUpperCase()}!`);
+      if (onVoteUpdate) onVoteUpdate(); // Refresh global counts in App.jsx
+    } catch (err) {
+      console.error('Error al votar:', err.message);
+      alert(`Error al registrar el voto: ${err.message}`);
+    } finally {
+      setIsVoting(false);
+    }
   };
 
   const sprite = pokemon.sprites?.other?.['official-artwork']?.front_default || 
@@ -84,7 +85,7 @@ function PokemonCard({ pokemon, onSelect, currentUser }) {
           alt={pokemon.name || 'Pokemon'}
           className="w-20 h-20 object-contain drop-shadow-lg group-hover:scale-110 transition-transform duration-300"
         />
-        <span className="absolute -top-1 -right-1 bg-blue-900 text-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+        <span className="absolute -top-1 -right-1 bg-blue-900 text-blue-200 text-[9px] font-bold px-1.5 py-0.5 rounded-md shadow-md">
           #{id}
         </span>
       </div>
@@ -110,19 +111,22 @@ function PokemonCard({ pokemon, onSelect, currentUser }) {
 
       <button
         onClick={handleVote}
-        disabled={hasVotedForThis}
-        className={`mt-auto w-full py-2 rounded-lg font-bold text-xs flex items-center justify-center gap-2 transition-all duration-200 active:scale-95 shadow-md ${
-          hasVotedForThis 
-            ? 'bg-blue-900/50 text-blue-400 border border-blue-500/30 cursor-default'
-            : 'bg-[#e94560] hover:bg-[#ff2e63] text-white'
+        disabled={initialHasVoted || isVoting}
+        className={`mt-auto w-full py-2.5 rounded-xl font-black text-[10px] flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-lg border-b-4 ${
+          initialHasVoted 
+            ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 cursor-default opacity-50'
+            : 'bg-[#e94560] hover:bg-[#ff2e63] text-white border-[#9b1d33] hover:translate-y-[1px] hover:border-b-2'
         }`}
       >
-        <FontAwesomeIcon icon={faHeart} className={hasVotedForThis ? 'text-blue-400' : 'text-white'} />
-        {hasVotedForThis ? 'VOTADO' : 'VOTAR'}
+        <FontAwesomeIcon icon={faHeart} className={initialHasVoted ? 'text-blue-500' : 'text-white'} />
+        {isVoting ? 'PROCESANDO...' : initialHasVoted ? 'MI FAVORITO' : 'VOTAR'}
       </button>
 
-      <div className="mt-2 text-[9px] text-gray-500 font-bold uppercase tracking-widest">
-        {voteCount} {voteCount === 1 ? 'Voto' : 'Votos'}
+      <div className="mt-3 flex items-center gap-2">
+        <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+        <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">
+          {initialVoteCount} {initialVoteCount === 1 ? 'Voto Global' : 'Votos Globales'}
+        </span>
       </div>
     </div>
   );
