@@ -1,10 +1,10 @@
-# PokéApp - Primera Generación
+# PokéApp
 
-Una aplicación interactiva construida con React, Tailwind CSS y PokéAPI que muestra los 151 Pokémon originales de la región de Kanto.
+Una aplicación interactiva construida con React, Tailwind CSS y PokéAPI que muestra todos los Pokemons.
 
 ## Características
 
-- **Lista de Pokémon:** Visualización en cuadrícula responsiva (hasta 4 columnas).
+- **Lista de Pokémon:** Visualización en cuadrícula responsiva.
 - **Tarjetas Interactivas:** Cada Pokémon se muestra en una tarjeta con su arte oficial, nombre, número de ID y tipos.
 - **Detalles Expandidos:** Al hacer clic en un Pokémon, se muestra una vista detallada con:
   - Descripción oficial de la Pokédex.
