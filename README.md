@@ -65,5 +65,9 @@ create policy "Permitir inserción para todos" on votes
    npm run dev -- --host
    ```
 
+## Que queda?
+
+El proyecto, aunque funcional, quiero que sea más bonito de lo que es ahora, algunas descripciones de pokedex faltan y hay errores menores de como se ven ciertos assets. Quiero agregar nuevas funcionalidades a ser posible, como poder mostrar los sprites de cada pokemon desde la vista general, que actualmente debido a la gran carga que implica mostrar miles de imagenes de buena calidad, preferí mostrar las imagenes de pokeball de baja calidad.
+
 ---
 © 2026 PokéApp - Proyecto de Comunidad Pokémon
