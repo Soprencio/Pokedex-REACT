@@ -2,9 +2,9 @@ import PokemonCard from './PokemonCard.jsx';
 
 function PokemonList({ pokemons, onSelect, currentUser, voteCounts, userVotes, onVoteUpdate }) {
   return (
-    <div className="w-full grid grid-cols-4 gap-2 sm:gap-4 md:gap-6">
-      {pokemons.map(pokemon => (
-        <div key={pokemon.id} className="w-full">
+    <div className="w-full grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 md:gap-6 lg:gap-8 justify-items-center">
+      {pokemons?.map(pokemon => (
+        <div key={pokemon.id} className="w-full max-w-[320px]">
           <PokemonCard 
             pokemon={pokemon} 
             onSelect={onSelect} 
