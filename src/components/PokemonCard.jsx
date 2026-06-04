@@ -57,10 +57,13 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
       onClick={() => onSelect && onSelect(pokemon)}
     >
       <div className="relative mb-4 w-28 h-28 flex items-center justify-center bg-[#1a1a2e] rounded-full group-hover:bg-[#0f3460] transition-colors duration-300 shadow-inner">
-        {/* Sprites desactivados para diagnóstico */}
-        <div className="w-16 h-16 rounded-full border-4 border-blue-900/20 flex items-center justify-center bg-blue-950/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
-           <span className="text-xl font-black text-blue-800 tracking-tighter opacity-40">PK</span>
-        </div>
+        <img
+          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`}
+          alt={pokemon.name}
+          loading="lazy"
+          className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] group-hover:scale-110 transition-transform duration-300"
+          onError={(e) => { e.target.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; }}
+        />
         <span className="absolute -top-1 -right-1 bg-blue-900 text-blue-200 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-blue-500/20">
           #{displayId}
         </span>

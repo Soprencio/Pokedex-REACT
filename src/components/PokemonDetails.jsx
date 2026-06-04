@@ -20,9 +20,37 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
   const [movesPage, setMovesPage] = useState(1);
   const [varieties, setVarieties] = useState([]);
 
+  // Base ID display logic: Use species data to find the original base form ID
+  const displayPokedexId = useMemo(() => {
+    if (!pokemon) return '???';
+    if (pokemon.id <= 1025) return pokemon.id.toString().padStart(3, '0');
+    if (species) {
+        const defaultVar = species.varieties.find(v => v.is_default);
+        if (defaultVar) {
+            const id = parseInt(defaultVar.pokemon.url.split('/').filter(Boolean).pop());
+            return id.toString().padStart(3, '0');
+        }
+    }
+    return pokemon.id.toString().padStart(3, '0');
+  }, [pokemon, species]);
+
+  // G-Max Logic: Inherit moves and double HP
+  const adjustedPokemon = useMemo(() => {
+    if (!pokemon) return null;
+    let p = { ...pokemon };
+    if (p.name.includes('-gmax') && varieties.length > 0) {
+      const base = varieties.find(v => v.id <= 1025);
+      if (base) {
+        p.moves = base.fullData.moves;
+        p.stats = p.stats.map(s => s.stat.name === 'hp' ? { ...s, base_stat: s.base_stat * 2 } : s);
+      }
+    }
+    return p;
+  }, [pokemon, varieties]);
+
   useEffect(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); }, [pokemon?.id]);
 
-  // Fetch Species and Varieties on-demand
+  // Load Species and Varieties details on-demand
   useEffect(() => {
     const fetchFullData = async () => {
       if (!pokemon?.species?.url) return;
@@ -30,19 +58,16 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
       try {
         const sRes = await axios.get(pokemon.species.url);
         setSpecies(sRes.data);
-        
-        // Load details for each variety found in species
-        const vPromises = sRes.data.varieties.map(v => axios.get(v.pokemon.url));
-        const vResponses = await Promise.all(vPromises);
-        
-        const detailedVarieties = vResponses.map(res => {
-            const d = res.data;
-            if (d.name.includes('-totem')) return null;
-            if (d.name.includes('-minior-') && !d.name.endsWith('-red')) return null;
-            return { id: d.id, name: d.name, types: d.types.map(t => t.type.name), fullData: d };
-        }).filter(v => v !== null);
-
-        setVarieties(detailedVarieties);
+        const vData = await Promise.all(sRes.data.varieties.map(async (v) => {
+            try {
+              const res = await axios.get(v.pokemon.url);
+              const d = res.data;
+              if (d.name.includes('-totem')) return null;
+              if (d.name.includes('-minior-') && !d.name.endsWith('-red')) return null;
+              return { id: d.id, name: d.name, types: d.types.map(t => t.type.name), fullData: d };
+            } catch (e) { return null; }
+        }));
+        setVarieties(vData.filter(v => v !== null));
       } catch (err) { console.error(err); } finally { setLoading(false); }
     };
     fetchFullData();
@@ -50,9 +75,9 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
 
   useEffect(() => {
     const fetchMoves = async () => {
-      if (!pokemon?.moves?.length) { setPagedMoves([]); return; }
+      if (!adjustedPokemon?.moves?.length) { setPagedMoves([]); return; }
       setLoadingMoves(true);
-      const items = pokemon.moves.slice((movesPage - 1) * MOVES_PER_PAGE, movesPage * MOVES_PER_PAGE);
+      const items = adjustedPokemon.moves.slice((movesPage - 1) * MOVES_PER_PAGE, movesPage * MOVES_PER_PAGE);
       try {
         const res = await Promise.all(items.map(m => axios.get(m.move.url)));
         setPagedMoves(res.map(r => ({
@@ -65,7 +90,7 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
       } catch (e) { console.error(e); } finally { setLoadingMoves(false); }
     };
     fetchMoves();
-  }, [movesPage, pokemon?.moves]);
+  }, [movesPage, adjustedPokemon?.moves]);
 
   const getStatColor = (value) => {
     if (value < 30) return '#8b0000';
@@ -80,16 +105,16 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
     return '#00ced1';
   };
 
-  const stats = pokemon?.stats?.map(s => ({
+  const stats = adjustedPokemon?.stats?.map(s => ({
     name: s.stat.name.replace('-', ' ').toUpperCase(),
     value: s.base_stat,
-    percent: Math.min(100, (s.base_stat / 180) * 100),
+    percent: Math.min(100, (s.base_stat / 200) * 100),
     color: getStatColor(s.base_stat)
   })) || [];
 
   if (loading || !pokemon) {
     return (
-      <div className="flex flex-col items-center justify-center py-24 bg-[#16213e] rounded-3xl border border-blue-900/30 w-full text-center">
+      <div className="flex flex-col items-center justify-center py-24 bg-[#16213e] rounded-3xl w-full text-center">
         <div className="w-10 h-10 border-4 border-yellow-400 border-t-transparent rounded-full animate-spin mx-auto"></div>
         <p className="mt-4 font-black text-blue-400 uppercase tracking-widest text-[10px]">Sincronizando Wiki...</p>
       </div>
@@ -103,17 +128,20 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
           <button onClick={onBack} className="self-start mb-6 text-blue-400 hover:text-yellow-400 font-black uppercase text-[10px] tracking-widest flex items-center gap-2"><FontAwesomeIcon icon={faArrowLeft} /> Volver</button>
           
           <div className="relative group mb-8">
-            <div className="absolute inset-0 bg-blue-500 rounded-full scale-110 opacity-10 blur-3xl"></div>
-            <div className="w-64 h-64 rounded-full border-8 border-blue-900/20 flex items-center justify-center bg-blue-950/30 shadow-inner group-hover:scale-105 transition-transform duration-300">
-               <span className="text-6xl font-black text-blue-800 tracking-tighter opacity-30">PK</span>
-            </div>
+            <div className="absolute inset-0 bg-blue-500 rounded-full scale-110 opacity-10 blur-3xl group-hover:opacity-20 transition-opacity"></div>
+            <img 
+              src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${adjustedPokemon.id}.png`} 
+              alt={adjustedPokemon.name} 
+              className="relative z-10 w-64 h-64 object-contain drop-shadow-[0_0_30px_rgba(59,130,246,0.2)] group-hover:scale-110 transition-transform duration-300"
+              onError={(e) => { e.target.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; }}
+            />
           </div>
 
           <div className="text-center mb-6 w-full">
-            <span className="text-blue-500 font-black text-xl mb-1 block tracking-widest">#{pokemon.id.toString().padStart(3, '0')}</span>
-            <h1 className="text-5xl font-black capitalize text-white tracking-tighter mb-4">{pokemon.name.replace('-', ' ')}</h1>
+            <span className="text-blue-500 font-black text-xl mb-1 block tracking-widest">#{displayPokedexId}</span>
+            <h1 className="text-5xl font-black capitalize text-white tracking-tighter mb-4">{adjustedPokemon.name.replace('-', ' ')}</h1>
             <div className="flex gap-2 justify-center">
-              {pokemon.types?.map(t => (
+              {adjustedPokemon.types?.map(t => (
                 <span key={t.type.name} className="px-5 py-1.5 rounded-xl text-white text-[10px] font-black uppercase tracking-widest shadow-lg" style={{ backgroundColor: typeColors[t.type.name] }}>{t.type.name}</span>
               ))}
             </div>
@@ -121,13 +149,22 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
 
           {/* Form Switcher */}
           {varieties.length > 1 && (
-            <div className="w-full mb-8 bg-black/20 p-5 rounded-[30px] border border-blue-900/20">
+            <div className="w-full mb-8 bg-black/20 p-5 rounded-[30px] border border-blue-900/20 shadow-inner">
                <h4 className="text-[9px] font-black text-blue-400 uppercase tracking-[0.2em] mb-4">Formas Disponibles</h4>
                <div className="flex gap-4 overflow-x-auto pb-2 no-scrollbar justify-center">
                   {varieties.map(v => (
-                    <button key={v.id} onClick={() => { setMovesPage(1); onSelectPokemon(v.fullData); }} className={`flex-shrink-0 w-16 h-16 rounded-2xl flex flex-col items-center justify-center transition-all ${v.id === pokemon.id ? 'bg-blue-600/30 border border-blue-400' : 'bg-[#1a1a2e] border border-transparent hover:border-blue-900'}`}>
-                        <span className="text-[10px] font-black text-blue-800 opacity-40">PK</span>
-                        <div className="flex gap-0.5 mt-1">
+                    <button 
+                        key={v.id} 
+                        onClick={() => { setMovesPage(1); onSelectPokemon(v.fullData); }} 
+                        className={`flex-shrink-0 w-16 h-20 rounded-2xl flex flex-col items-center justify-center transition-all gap-1 ${v.id === pokemon.id ? 'bg-blue-600/30 border border-blue-400' : 'bg-[#1a1a2e] border border-transparent hover:border-blue-900'}`}
+                    >
+                        <img 
+                          src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${v.id}.png`}
+                          alt={v.name}
+                          className="w-10 h-10 object-contain"
+                          onError={(e) => { e.target.src = 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png'; }}
+                        />
+                        <div className="flex gap-0.5">
                             {v.types.map(t => <div key={t} className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: typeColors[t] }}></div>)}
                         </div>
                     </button>
@@ -137,14 +174,14 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
           )}
 
           <div className="grid grid-cols-2 gap-4 w-full mb-8">
-            <div className="bg-[#1a1a2e] p-4 rounded-2xl border border-blue-900/30 text-center"><FontAwesomeIcon icon={faWeightHanging} className="text-blue-400 mb-2" /><p className="text-[10px] text-gray-500 font-black uppercase">Peso</p><p className="text-lg font-bold text-white">{pokemon.weight / 10} kg</p></div>
-            <div className="bg-[#1a1a2e] p-4 rounded-2xl border border-blue-900/30 text-center"><FontAwesomeIcon icon={faArrowsUpDown} className="text-green-400 mb-2" /><p className="text-[10px] text-gray-500 font-black uppercase">Altura</p><p className="text-lg font-bold text-white">{pokemon.height / 10} m</p></div>
+            <div className="bg-[#1a1a2e] p-4 rounded-2xl border border-blue-900/30 text-center shadow-inner"><FontAwesomeIcon icon={faWeightHanging} className="text-blue-400 mb-2" /><p className="text-[10px] text-gray-500 font-black uppercase">Peso</p><p className="text-lg font-bold text-white">{adjustedPokemon.weight / 10} kg</p></div>
+            <div className="bg-[#1a1a2e] p-4 rounded-2xl border border-blue-900/30 text-center shadow-inner"><FontAwesomeIcon icon={faArrowsUpDown} className="text-green-400 mb-2" /><p className="text-[10px] text-gray-500 font-black uppercase">Altura</p><p className="text-lg font-bold text-white">{adjustedPokemon.height / 10} m</p></div>
           </div>
 
           <div className="w-full mb-8 text-left">
             <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-4 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div> Habilidades</h3>
             <div className="flex flex-wrap gap-2">
-              {pokemon.abilities?.map(a => (
+              {adjustedPokemon.abilities?.map(a => (
                 <button key={a.ability.name} onClick={() => onSelectAbility && onSelectAbility(a.ability)} className={`px-4 py-2 rounded-xl border transition-all text-left ${a.is_hidden ? 'bg-purple-900/10 border-purple-500/30' : 'bg-blue-900/10 border-blue-500/10'}`}>
                     <span className="text-xs font-bold text-white capitalize">{a.ability.name.replace('-', ' ')}</span>
                     {a.is_hidden && <span className="block text-[7px] font-black text-purple-400 uppercase">Oculta</span>}
@@ -173,11 +210,11 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
 
         <div className="lg:w-1/2 p-8 bg-[#0f3460]/20 flex flex-col h-[90vh]">
           <div className="flex justify-between items-center mb-8 flex-shrink-0">
-             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2"><FontAwesomeIcon icon={faStar} className="text-yellow-400" /> Ataques ({pokemon.moves?.length || 0})</h3>
+             <h3 className="text-xs font-black text-white uppercase tracking-widest flex items-center gap-2"><FontAwesomeIcon icon={faStar} className="text-yellow-400" /> Ataques ({adjustedPokemon.moves?.length || 0})</h3>
              <div className="flex items-center gap-4 bg-[#1a1a2e] px-3 py-1.5 rounded-xl border border-blue-900/30 shadow-inner">
                 <button disabled={movesPage === 1} onClick={() => setMovesPage(p => p - 1)} className="text-blue-400 disabled:opacity-20"><FontAwesomeIcon icon={faChevronLeft} size="xs" /></button>
                 <span className="text-[9px] font-black text-white">Pág {movesPage}</span>
-                <button disabled={movesPage >= (Math.ceil((pokemon.moves?.length || 0) / MOVES_PER_PAGE))} onClick={() => setMovesPage(p => p + 1)} className="text-blue-400 disabled:opacity-20"><FontAwesomeIcon icon={faChevronRight} size="xs" /></button>
+                <button disabled={movesPage >= (Math.ceil((adjustedPokemon.moves?.length || 0) / MOVES_PER_PAGE))} onClick={() => setMovesPage(p => p + 1)} className="text-blue-400 disabled:opacity-20"><FontAwesomeIcon icon={faChevronRight} size="xs" /></button>
              </div>
           </div>
           <div className="flex-grow overflow-y-auto custom-scrollbar relative pr-2">
