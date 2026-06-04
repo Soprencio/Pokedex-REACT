@@ -10,7 +10,7 @@ const typeColors = {
   dark: '#705746', steel: '#B7B7CE', fairy: '#D685AD',
 };
 
-function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initialHasVoted, onVoteUpdate }) {
+function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initialHasVoted, onVoteUpdate, typeMap }) {
   const [isVoting, setIsVoting] = useState(false);
 
   if (!pokemon) return null;
@@ -47,11 +47,9 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
     }
   };
 
-  const sprite = pokemon.sprites?.other?.['official-artwork']?.front_default || 
-                 pokemon.sprites?.front_default || 
-                 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/poke-ball.png';
-
-  const id = pokemon.id ? pokemon.id.toString().padStart(3, '0') : '???';
+  const id = pokemon.id;
+  const displayId = id?.toString().padStart(3, '0') || '???';
+  const types = (typeMap && typeMap[id]) || [];
 
   return (
     <div
@@ -59,13 +57,12 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
       onClick={() => onSelect && onSelect(pokemon)}
     >
       <div className="relative mb-4 w-28 h-28 flex items-center justify-center bg-[#1a1a2e] rounded-full group-hover:bg-[#0f3460] transition-colors duration-300 shadow-inner">
-        <img
-          src={sprite}
-          alt={pokemon.name || 'Pokemon'}
-          className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(59,130,246,0.3)] group-hover:scale-110 transition-transform duration-300"
-        />
+        {/* Sprites desactivados para diagnóstico */}
+        <div className="w-16 h-16 rounded-full border-4 border-blue-900/20 flex items-center justify-center bg-blue-950/30 shadow-inner group-hover:scale-110 transition-transform duration-300">
+           <span className="text-xl font-black text-blue-800 tracking-tighter opacity-40">PK</span>
+        </div>
         <span className="absolute -top-1 -right-1 bg-blue-900 text-blue-200 text-[10px] font-black px-2 py-0.5 rounded-lg shadow-md border border-blue-500/20">
-          #{id}
+          #{displayId}
         </span>
       </div>
 
@@ -74,13 +71,13 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
       </h3>
 
       <div className="flex flex-wrap justify-center gap-2 mb-4">
-        {pokemon.types?.map(type => (
+        {types.map(typeName => (
           <div
-            key={type.type.name}
+            key={typeName}
             className="px-3 py-0.5 rounded-md text-white text-[9px] font-black uppercase tracking-widest shadow-md"
-            style={{ backgroundColor: typeColors[type.type.name] || '#777' }}
+            style={{ backgroundColor: typeColors[typeName] || '#777' }}
           >
-            {type.type.name}
+            {typeName}
           </div>
         ))}
       </div>
@@ -91,16 +88,16 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
         className={`mt-auto w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-xl border-b-4 ${
           initialHasVoted 
             ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 cursor-default opacity-50'
-            : 'bg-[#e94560] hover:bg-[#ff2e63] text-white border-[#9b1d33] hover:border-b-2 hover:translate-y-[2px]'
+            : 'bg-[#e94560] hover:bg-[#ff2e63] text-white border-[#9b1d33] hover:translate-y-[2px]'
         }`}
       >
         <FontAwesomeIcon icon={faHeart} className={initialHasVoted ? 'text-blue-500' : 'text-white'} />
-        {isVoting ? 'PROCESANDO' : initialHasVoted ? 'FAVORITO' : 'VOTAR'}
+        {isVoting ? '...' : initialHasVoted ? 'FAVORITO' : 'VOTAR'}
       </button>
 
-      <div className="mt-4 flex items-center gap-2">
+      <div className="mt-4 flex items-center gap-2 opacity-50">
         <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-        <span className="text-[10px] text-gray-500 font-black uppercase tracking-[0.2em]">
+        <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">
           {initialVoteCount} {initialVoteCount === 1 ? 'Voto' : 'Votos'}
         </span>
       </div>
