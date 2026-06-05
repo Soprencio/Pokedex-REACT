@@ -65,6 +65,19 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
     fetchMoves();
   }, [movesPage, pokemon?.moves]);
 
+  const getStatColor = (value) => {
+    if (value < 30) return '#8b0000';
+    if (value < 50) return '#ff4500';
+    if (value < 70) return '#ffa500';
+    if (value < 80) return '#ffbd00';
+    if (value < 90) return '#ffff00';
+    if (value < 110) return '#a3ff00';
+    if (value < 120) return '#00ff00';
+    if (value < 130) return '#00ff7f';
+    if (value < 150) return '#40e0d0';
+    return '#00ced1';
+  };
+
   if (loading || !pokemon) {
     return (
       <div className="flex flex-col items-center justify-center py-24 bg-[#16213e] rounded-3xl border border-blue-900/30 w-full text-center">
@@ -142,17 +155,20 @@ function PokemonDetails({ pokemon, onBack, onSelectMove, onSelectAbility, onSele
           <div className="w-full text-left">
             <h3 className="text-[10px] font-black text-blue-400 uppercase tracking-widest mb-6 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-yellow-400 rounded-full"></div> Estadísticas Base</h3>
             <div className="space-y-4">
-              {pokemon?.stats?.map(s => (
-                <div key={s.stat.name}>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-[9px] font-black text-gray-500 uppercase">{s.stat.name.replace('-', ' ')}</span>
-                    <span className="text-xs font-bold text-white">{s.base_stat}</span>
+              {pokemon?.stats?.map(s => {
+                const val = s.base_stat;
+                return (
+                  <div key={s.stat.name}>
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[9px] font-black text-gray-500 uppercase">{s.stat.name.replace('-', ' ')}</span>
+                      <span className="text-xs font-bold text-white">{val}</span>
+                    </div>
+                    <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
+                      <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (val / 200) * 100)}%`, backgroundColor: getStatColor(val) }}></div>
+                    </div>
                   </div>
-                  <div className="h-1.5 bg-[#1a1a2e] rounded-full overflow-hidden">
-                    <div className="h-full rounded-full transition-all duration-1000" style={{ width: `${Math.min(100, (s.base_stat / 200) * 100)}%`, backgroundColor: '#00ced1' }}></div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
