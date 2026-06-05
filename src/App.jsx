@@ -6,6 +6,7 @@ import MoveList from './components/MoveList.jsx';
 import MoveDetails from './components/MoveDetails.jsx';
 import AbilityList from './components/AbilityList.jsx';
 import AbilityDetails from './components/AbilityDetails.jsx';
+import TeamBuilder from './components/TeamBuilder.jsx';
 import Auth from './components/Auth.jsx';
 import { supabase } from './supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -14,15 +15,15 @@ import { faUserCircle, faSignOutAlt, faSearch, faBars, faCaretDown, faExclamatio
 const generations = [
   { name: 'Todos', style: 'bg-[#f1f5f9] text-gray-700 border-gray-300' },
   { name: 'Ranking', special: 'votes', style: 'bg-[#ffcc00] text-[#4a3701] border-[#d4af37]' },
-  { name: 'Gen I', offset: 0, limit: 151, style: 'bg-[linear-gradient(to_right,#ff0000_50%,#ff0000_50%,#0000ff_50%,#0000ff_100%)] bg-no-repeat text-white border-white/10' },
-  { name: 'Gen II', offset: 151, limit: 100, style: 'bg-[linear-gradient(to_right,#ffd700_50%,#ffd700_50%,#c0c0c0_50%,#c0c0c0_100%)] bg-no-repeat text-[#1a1a2e] border-black/10' },
-  { name: 'Gen III', offset: 251, limit: 135, style: 'bg-[linear-gradient(to_right,#a50f21_50%,#a50f21_50%,#00008b_50%,#00008b_100%)] bg-no-repeat text-white border-white/10' },
-  { name: 'Gen IV', offset: 386, limit: 107, style: 'bg-[linear-gradient(to_right,#7b96b8_50%,#7b96b8_50%,#ffc0cb_50%,#ffc0cb_100%)] bg-no-repeat text-[#1a1a2e] border-black/5' },
-  { name: 'Gen V', offset: 493, limit: 156, style: 'bg-[linear-gradient(to_right,#ffffff_50%,#ffffff_50%,#000000_50%,#000000_100%)] bg-no-repeat text-[#666666] border-gray-400 font-bold' },
-  { name: 'Gen VI', offset: 649, limit: 72, style: 'bg-[linear-gradient(to_right,#025da6_50%,#025da6_50%,#ea1a15_50%,#ea1a15_100%)] bg-no-repeat text-white border-white/10' },
-  { name: 'Gen VII', offset: 721, limit: 88, style: 'bg-[linear-gradient(to_right,#f1912b_50%,#f1912b_50%,#9151b8_50%,#9151b8_100%)] bg-no-repeat text-white border-white/10' },
-  { name: 'Gen VIII', offset: 809, limit: 96, style: 'bg-[linear-gradient(to_right,#00a1e9_50%,#00a1e9_50%,#e5005a_50%,#e5005a_100%)] bg-no-repeat text-white border-white/10' },
-  { name: 'Gen IX', offset: 905, limit: 120, style: 'bg-[linear-gradient(to_right,#ff1c1c_50%,#ff1c1c_50%,#65219e_50%,#65219e_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen I', id: 1, offset: 0, limit: 151, style: 'bg-[linear-gradient(to_right,#ff0000_50%,#ff0000_50%,#0000ff_50%,#0000ff_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen II', id: 2, offset: 151, limit: 100, style: 'bg-[linear-gradient(to_right,#ffd700_50%,#ffd700_50%,#c0c0c0_50%,#c0c0c0_100%)] bg-no-repeat text-[#1a1a2e] border-black/10' },
+  { name: 'Gen III', id: 3, offset: 251, limit: 135, style: 'bg-[linear-gradient(to_right,#a50f21_50%,#a50f21_50%,#00008b_50%,#00008b_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen IV', id: 4, offset: 386, limit: 107, style: 'bg-[linear-gradient(to_right,#7b96b8_50%,#7b96b8_50%,#ffc0cb_50%,#ffc0cb_100%)] bg-no-repeat text-[#1a1a2e] border-black/5' },
+  { name: 'Gen V', id: 5, offset: 493, limit: 156, style: 'bg-[linear-gradient(to_right,#ffffff_50%,#ffffff_50%,#000000_50%,#000000_100%)] bg-no-repeat text-[#666666] border-gray-400 font-bold' },
+  { name: 'Gen VI', id: 6, offset: 649, limit: 72, style: 'bg-[linear-gradient(to_right,#025da6_50%,#025da6_50%,#ea1a15_50%,#ea1a15_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen VII', id: 7, offset: 721, limit: 88, style: 'bg-[linear-gradient(to_right,#f1912b_50%,#f1912b_50%,#9151b8_50%,#9151b8_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen VIII', id: 8, offset: 809, limit: 96, style: 'bg-[linear-gradient(to_right,#00a1e9_50%,#00a1e9_50%,#e5005a_50%,#e5005a_100%)] bg-no-repeat text-white border-white/10' },
+  { name: 'Gen IX', id: 9, offset: 905, limit: 120, style: 'bg-[linear-gradient(to_right,#ff1c1c_50%,#ff1c1c_50%,#65219e_50%,#65219e_100%)] bg-no-repeat text-white border-white/10' },
 ];
 
 const typeColors = {
@@ -75,6 +76,14 @@ function App() {
   const [moveTypeMap, setMoveTypeMap] = useState({}); 
   const [genDataMap, setGenDataMap] = useState({});
 
+  // LIFTED TEAM BUILDER STATE
+  const [isCreatingTeam, setIsCreatingTeam] = useState(false);
+  const [editingTeamId, setEditingTeamId] = useState(null);
+  const [teamName, setTeamName] = useState('');
+  const [currentTeamMembers, setCurrentTeamMembers] = useState(Array(6).fill(null));
+  const [editingSlotIndex, setEditingSlotIndex] = useState(null);
+  const [isSelectingForSlot, setIsSelectingForSlot] = useState(false);
+
   const fetchGlobalVotes = async () => {
     try {
       const { data, error: vError } = await supabase.from('votes').select('pokemon_id, email');
@@ -99,7 +108,6 @@ function App() {
 
       try {
         setLoading(true);
-        // Base Fetch (Only base 1025 species)
         const [pRes, mRes, aRes] = await Promise.all([
           axios.get('https://pokeapi.co/api/v2/pokemon?limit=1025'),
           axios.get('https://pokeapi.co/api/v2/move?limit=1000'),
@@ -110,7 +118,6 @@ function App() {
         setAllMoves(mRes.data.results.map(m => ({ ...m, id: parseInt(m.url.split('/').filter(Boolean).pop()) })));
         setAllAbilities(aRes.data.results.map(a => ({ ...a, id: parseInt(a.url.split('/').filter(Boolean).pop()) })));
 
-        // Load Maps
         const pTypeMap = {};
         const mTypeMap = {};
         const typePromises = Object.keys(typeColors).map(t => axios.get(`https://pokeapi.co/api/v2/type/${t}`));
@@ -150,7 +157,7 @@ function App() {
   }, []);
 
   useEffect(() => {
-    let base = activeView === 'Pokemons' ? allPokemons : activeView === 'Movimientos' ? allMoves : allAbilities;
+    let base = (activeView === 'Pokemons' || activeView === 'Equipos') ? allPokemons : activeView === 'Movimientos' ? allMoves : allAbilities;
     if (!base || base.length === 0) return;
 
     let filtered = [...base];
@@ -164,19 +171,19 @@ function App() {
     if (activeView === 'Pokemons' && activeGen === 'Ranking') {
       filtered = filtered.filter(p => voteCounts[p.id] > 0).sort((a,b) => (voteCounts[b.id] || 0) - (voteCounts[a.id] || 0));
     } else if (activeGen !== 'Todos' && genObj) {
-      const genIndex = generations.indexOf(genObj);
-      const actualGenId = genIndex - 1; 
-
-      if (actualGenId > 0 && genDataMap[actualGenId]) {
-        const namesInGen = genDataMap[actualGenId][activeView === 'Pokemons' ? 'pokemon' : activeView === 'Movimientos' ? 'moves' : 'abilities'];
-        filtered = filtered.filter(item => namesInGen.includes(item.name));
-      } else if (activeView === 'Pokemons' && genObj.limit !== undefined) {
-         filtered = filtered.filter(p => p.id > genObj.offset && p.id <= (genObj.offset + genObj.limit));
-      }
+        if (activeView === 'Pokemons' || activeView === 'Equipos') {
+            filtered = filtered.filter(p => p.id > genObj.offset && p.id <= (genObj.offset + genObj.limit));
+        } else {
+            const genId = genObj.id; 
+            if (genId > 0 && genDataMap[genId]) {
+                const namesInGen = genDataMap[genId][activeView === 'Movimientos' ? 'moves' : 'abilities'];
+                filtered = filtered.filter(item => namesInGen.includes(item.name));
+            }
+        }
     }
 
     if (selectedTypes.length > 0) {
-      if (activeView === 'Pokemons') {
+      if (activeView === 'Pokemons' || activeView === 'Equipos') {
         filtered = filtered.filter(p => selectedTypes.every(t => (pokemonTypeMap[p.id] || []).includes(t)));
       } else if (activeView === 'Movimientos') {
         filtered = filtered.filter(m => selectedTypes.includes(moveTypeMap[m.id]));
@@ -247,6 +254,9 @@ function App() {
     );
   }
 
+  // Rule: Sidebar and Gen bar are only visible in normal views OR when selecting for a slot
+  const showFilters = activeView !== 'Equipos' || isSelectingForSlot;
+
   return (
     <div className="App min-h-screen bg-[#1a1a2e] font-sans text-gray-100 flex flex-col overflow-x-hidden">
       {loading && !allPokemons.length && (
@@ -283,7 +293,7 @@ function App() {
                 {menuOpen && (
                   <div className="absolute right-0 top-full mt-2 w-48 bg-[#16213e] border border-blue-900/50 rounded-2xl shadow-2xl overflow-hidden z-[100] animate-fadeIn">
                     {['Pokemons', 'Movimientos', 'Habilidades', 'Equipos'].map(v => (
-                      <button key={v} onClick={() => { setActiveView(v); setMenuOpen(false); setCurrentPage(1); setActiveGen('Todos'); setSelectedTypes([]); setSelectedPokemon(null); setSelectedMove(null); setSelectedAbility(null); }} className={`w-full text-left px-5 py-3.5 text-xs font-black uppercase tracking-widest transition-colors border-b border-blue-900/20 last:border-0 ${activeView === v ? 'bg-blue-600 text-white' : 'text-blue-300 hover:bg-blue-900/30'}`}>{v}</button>
+                      <button key={v} onClick={() => { setActiveView(v); setMenuOpen(false); setCurrentPage(1); setActiveGen('Todos'); setSelectedTypes([]); setSelectedPokemon(null); setSelectedMove(null); setSelectedAbility(null); setIsSelectingForSlot(false); }} className={`w-full text-left px-5 py-3.5 text-xs font-black uppercase tracking-widest transition-colors border-b border-blue-900/20 last:border-0 ${activeView === v ? 'bg-blue-600 text-white' : 'text-blue-300 hover:bg-blue-900/30'}`}>{v}</button>
                     ))}
                   </div>
                 )}
@@ -294,8 +304,8 @@ function App() {
       </header>
 
       <div className="flex flex-1 relative max-w-[1800px] mx-auto w-full">
-        {currentUser && !selectedPokemon && !selectedMove && !selectedAbility && (
-          <aside className="w-64 bg-[#16213e] border-r border-blue-900/50 p-5 flex flex-col gap-6 hidden lg:flex sticky top-[120px] h-[calc(100vh-140px)]">
+        {currentUser && !selectedPokemon && !selectedMove && !selectedAbility && showFilters && (
+          <aside className="w-64 bg-[#16213e] border-r border-blue-900/50 p-5 flex flex-col gap-6 hidden lg:flex sticky top-[140px] h-[calc(100vh-140px)]">
             <div className="flex flex-col gap-3">
               <div className="relative">
                 <input type="text" placeholder="Buscar..." value={searchQuery} onChange={(e) => setSearchBar(e.target.value)} className="w-full bg-[#1a1a2e] border-2 border-blue-900/50 rounded-xl py-2.5 px-4 pl-10 text-sm font-bold text-white focus:border-yellow-400 focus:outline-none transition-all placeholder-blue-900/50 shadow-inner" />
@@ -303,7 +313,7 @@ function App() {
               </div>
               {typeError && <div className="bg-red-900/20 border border-red-500/50 text-red-400 p-2 rounded-lg text-[9px] font-black uppercase text-center animate-bounce">{typeError}</div>}
             </div>
-            {activeView !== 'Habilidades' && activeView !== 'Equipos' && (
+            {activeView !== 'Habilidades' && (
               <div className="flex flex-col h-full overflow-hidden text-center">
                 <h3 className="text-[9px] font-black text-blue-500 uppercase tracking-widest mb-3 ml-1">Filtrar por Tipo</h3>
                 <div className="grid grid-cols-2 gap-2 overflow-y-auto pr-1 custom-scrollbar">
@@ -327,7 +337,14 @@ function App() {
               {selectedPokemon ? (
                 <PokemonDetails 
                   pokemon={selectedPokemon} 
-                  onBack={() => setSelectedPokemon(null)} 
+                  onBack={() => {
+                    setSelectedPokemon(null);
+                    // CRITICAL FIX: If we go back from details while in team builder, 
+                    // user wants to go back to the builder slots, hiding filters.
+                    if (activeView === 'Equipos' && isSelectingForSlot) {
+                        setIsSelectingForSlot(false);
+                    }
+                  }} 
                   onSelectMove={handleSelectMove}
                   onSelectAbility={handleSelectAbility}
                   onSelectPokemon={handleSelectPokemon}
@@ -339,25 +356,58 @@ function App() {
                 <AbilityDetails ability={selectedAbility} onBack={() => setSelectedAbility(null)} onSelectPokemon={handleSelectPokemon} />
               ) : (
                 <div className="animate-fadeIn w-full flex flex-col items-center">
-                  <nav className="w-full overflow-x-auto no-scrollbar scroll-smooth mb-6">
-                    <div className="flex items-center justify-start md:justify-center gap-2.5 min-w-max pb-4 pt-4 px-2 mx-auto">
-                      {generations.filter(g => activeView === 'Pokemons' || g.name !== 'Ranking').map((gen) => (
-                        <button key={gen.name} onClick={() => { setActiveGen(gen.name); setCurrentPage(1); }} className={`relative px-5 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all duration-300 border-2 shadow-md hover:scale-105 group ${activeGen === gen.name ? `${gen.style} border-yellow-400 scale-110 z-10` : `${gen.style} opacity-70 border-transparent hover:border-white/20`}`}>
-                          {gen.name === 'Ranking' && <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/kings-rock.png" alt="Crown" className="absolute -top-6 left-1/2 -translate-x-1/2 w-8 h-8 drop-shadow-md animate-bounce z-[20]" />}
-                          <span className="relative z-10">{gen.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  </nav>
-                  <div className="w-full flex flex-col md:flex-row justify-between items-center mb-6 gap-3 px-2">
-                    <div className="text-blue-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 bg-blue-900/10 px-4 py-2 rounded-full border border-blue-900/30">Resultados: {filteredItems.length}</div>
-                    {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
-                  </div>
-                  {activeView === 'Pokemons' && <PokemonList pokemons={paginatedList} onSelect={handleSelectPokemon} currentUser={currentUser} voteCounts={voteCounts} userVotes={userVotes} onVoteUpdate={fetchGlobalVotes} typeMap={pokemonTypeMap} />}
-                  {activeView === 'Movimientos' && <MoveList moves={paginatedList} onSelect={setSelectedMove} selectedTypes={selectedTypes} moveTypeMap={moveTypeMap} />}
-                  {activeView === 'Habilidades' && <AbilityList abilities={paginatedList} onSelect={setSelectedAbility} />}
-                  {activeView === 'Equipos' && <div className="text-center py-20 text-blue-400 uppercase font-black text-xs tracking-[0.5em] italic">Próximamente...</div>}
-                  {totalPages > 1 && <div className="mt-8"><PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} /></div>}
+                  {showFilters && (
+                    <nav className="w-full overflow-x-auto no-scrollbar scroll-smooth mb-6">
+                      <div className="flex items-center justify-start md:justify-center gap-2.5 min-w-max pb-4 pt-4 px-2 mx-auto">
+                        {generations.filter(g => (activeView === 'Pokemons' || isSelectingForSlot) || g.name !== 'Ranking').map((gen) => (
+                          <button key={gen.name} onClick={() => { setActiveGen(gen.name); setCurrentPage(1); }} className={`relative px-5 py-2 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all duration-300 border-2 shadow-md hover:scale-105 group ${activeGen === gen.name ? `${gen.style} border-yellow-400 scale-110 z-10` : `${gen.style} opacity-70 border-transparent hover:border-white/20`}`}>
+                            {gen.name === 'Ranking' && <img src="https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/items/kings-rock.png" alt="Crown" className="absolute -top-6 left-1/2 -translate-x-1/2 w-8 h-8 drop-shadow-md animate-bounce z-[20]" />}
+                            <span className="relative z-10">{gen.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </nav>
+                  )}
+
+                  {activeView === 'Equipos' ? (
+                    <TeamBuilder 
+                      currentUser={currentUser} 
+                      pokemonTypeMap={pokemonTypeMap}
+                      onSelectPokemonDetails={handleSelectPokemon}
+                      paginatedList={paginatedList}
+                      totalPages={totalPages}
+                      currentPage={currentPage}
+                      onPageChange={handlePageChange}
+
+                      // Lifted State & Setters
+                      isCreating={isCreatingTeam}
+                      setIsCreating={setIsCreatingTeam}
+                      editingTeamId={editingTeamId}
+                      setEditingTeamId={setEditingTeamId}
+                      teamName={teamName}
+                      setTeamName={setTeamName}
+                      currentTeam={currentTeamMembers}
+                      setCurrentTeam={setCurrentTeamMembers}
+                      editingSlot={editingSlotIndex}
+                      setEditingSlot={setEditingSlotIndex}
+                      isSelectingPokemon={isSelectingForSlot}
+                      setIsSelectingPokemon={setIsSelectingForSlot}
+                    />
+                  ) : (
+                    <>
+                      <div className="w-full flex flex-col md:flex-row justify-between items-center mb-6 gap-3 px-2">
+                        <div className="text-blue-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-1.5 bg-blue-900/10 px-4 py-2 rounded-full border border-blue-900/30 shadow-inner">
+                            <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+                            Resultados: {filteredItems.length}
+                        </div>
+                        {totalPages > 1 && <PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} />}
+                      </div>
+                      {activeView === 'Pokemons' && <PokemonList pokemons={paginatedList} onSelect={handleSelectPokemon} currentUser={currentUser} voteCounts={voteCounts} userVotes={userVotes} onVoteUpdate={fetchGlobalVotes} typeMap={pokemonTypeMap} />}
+                      {activeView === 'Movimientos' && <MoveList moves={paginatedList} onSelect={setSelectedMove} selectedTypes={selectedTypes} moveTypeMap={moveTypeMap} />}
+                      {activeView === 'Habilidades' && <AbilityList abilities={paginatedList} onSelect={setSelectedAbility} />}
+                      {totalPages > 1 && <div className="mt-8"><PaginationControls currentPage={currentPage} totalPages={totalPages} onPageChange={handlePageChange} /></div>}
+                    </>
+                  )}
                 </div>
               )}
             </div>

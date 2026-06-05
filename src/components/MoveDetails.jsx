@@ -17,7 +17,7 @@ function MoveDetails({ move, onBack, onSelectPokemon }) {
   const totalPages = Math.ceil(learners.length / itemsPerPage);
   const paginatedLearners = learners.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const type = move.type.name;
+  const type = move.type?.name || 'normal';
   const color = typeColors[type];
 
   return (
@@ -37,11 +37,11 @@ function MoveDetails({ move, onBack, onSelectPokemon }) {
           </div>
           <div className="grid grid-cols-2 gap-4">
              <div className="bg-black/40 p-6 rounded-3xl text-center border border-white/5">
-                <span className="block text-[10px] text-gray-500 uppercase mb-1">Poder</span>
+                <span className="block text-[10px] font-black text-gray-500 uppercase mb-1">Poder</span>
                 <span className="text-3xl font-black text-white">{move.power || '--'}</span>
              </div>
              <div className="bg-black/40 p-6 rounded-3xl text-center border border-white/5">
-                <span className="block text-[10px] text-gray-500 uppercase mb-1">Precisión</span>
+                <span className="block text-[10px] font-black text-gray-500 uppercase mb-1">Precisión</span>
                 <span className="text-3xl font-black text-white">{move.accuracy ? `${move.accuracy}%` : '--'}</span>
              </div>
           </div>

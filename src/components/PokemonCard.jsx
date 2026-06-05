@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faHeart } from '@fortawesome/free-solid-svg-icons';
+import { faHeart, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { supabase } from '../supabase';
 
 const typeColors = {
@@ -10,7 +10,7 @@ const typeColors = {
   dark: '#705746', steel: '#B7B7CE', fairy: '#D685AD',
 };
 
-function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initialHasVoted, onVoteUpdate, typeMap }) {
+function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initialHasVoted, onVoteUpdate, typeMap, mode = 'vote', onAdd }) {
   const [isVoting, setIsVoting] = useState(false);
 
   if (!pokemon) return null;
@@ -85,25 +85,36 @@ function PokemonCard({ pokemon, onSelect, currentUser, initialVoteCount, initial
         ))}
       </div>
 
-      <button
-        onClick={handleVote}
-        disabled={initialHasVoted || isVoting}
-        className={`mt-auto w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-xl border-b-4 ${
-          initialHasVoted 
-            ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 cursor-default opacity-50'
-            : 'bg-[#e94560] hover:bg-[#ff2e63] text-white border-[#9b1d33] hover:translate-y-[2px]'
-        }`}
-      >
-        <FontAwesomeIcon icon={faHeart} className={initialHasVoted ? 'text-blue-500' : 'text-white'} />
-        {isVoting ? '...' : initialHasVoted ? 'FAVORITO' : 'VOTAR'}
-      </button>
+      {mode === 'vote' ? (
+        <>
+          <button
+            onClick={handleVote}
+            disabled={initialHasVoted || isVoting}
+            className={`mt-auto w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 transition-all duration-300 active:scale-95 shadow-xl border-b-4 ${
+              initialHasVoted 
+                ? 'bg-blue-900/30 text-blue-400 border-blue-900/50 cursor-default opacity-50'
+                : 'bg-[#e94560] hover:bg-[#ff2e63] text-white border-[#9b1d33] hover:translate-y-[2px]'
+            }`}
+          >
+            <FontAwesomeIcon icon={faHeart} className={initialHasVoted ? 'text-blue-500' : 'text-white'} />
+            {isVoting ? '...' : initialHasVoted ? 'FAVORITO' : 'VOTAR'}
+          </button>
 
-      <div className="mt-4 flex items-center gap-2 opacity-50">
-        <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
-        <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">
-          {initialVoteCount} {initialVoteCount === 1 ? 'Voto' : 'Votos'}
-        </span>
-      </div>
+          <div className="mt-4 flex items-center gap-2 opacity-50">
+            <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse"></div>
+            <span className="text-[10px] text-gray-400 font-black uppercase tracking-[0.2em]">
+              {initialVoteCount} {initialVoteCount === 1 ? 'Voto' : 'Votos'}
+            </span>
+          </div>
+        </>
+      ) : (
+        <button
+          onClick={(e) => { e.stopPropagation(); onAdd(pokemon); }}
+          className="mt-auto w-full py-2.5 rounded-xl font-black text-xs flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white border-b-4 border-blue-800 active:scale-95 transition-all shadow-xl"
+        >
+          <FontAwesomeIcon icon={faPlus} /> AGREGAR
+        </button>
+      )}
     </div>
   );
 }
