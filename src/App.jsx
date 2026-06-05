@@ -267,7 +267,13 @@ function App() {
               </div>
             )}
           </div>
-          <div className="flex flex-col items-center"><h1 className="pokemon-font text-4xl md:text-6xl tracking-[0.1em]">Poke<span className="pokevote-v">Vote</span></h1></div>
+          <div className="flex flex-col items-center text-center">
+            <h1 className="pokemon-font text-5xl md:text-7xl tracking-[0.1em] leading-tight">Poke<span className="pokevote-v">Vote</span></h1>
+            <div className="mt-2 text-xs">
+              <p className="subtitle-font text-yellow-400 font-bold text-lg md:text-2xl uppercase">¡Elige Tu favorito!</p>
+              <p className="text-[9px] md:text-xs text-red-400 font-bold italic mt-1 bg-red-950/20 px-3 py-1 rounded-full border border-red-500/10 uppercase whitespace-nowrap">"Una vez elijas, no podrás cambiar de opinión, ¡piénsalo bien!"</p>
+            </div>
+          </div>
           <div className="w-1/4 flex justify-end">
             {currentUser && (
               <div className="relative">
